@@ -1,4 +1,4 @@
-require "nbu_currency/version"
+require 'nbu_currency/version'
 require 'open-uri'
 require 'nokogiri'
 require 'money'
@@ -12,6 +12,11 @@ class NbuCurrency < Money::Bank::VariableExchange
 
   CURRENCIES = %w(USD CAD EUR GBP UAH).map(&:freeze).freeze
   NBU_RATES_URL = 'https://privat24.privatbank.ua/p24/accountorder?oper=prp&PUREXML&apicour&country=ua&full'.freeze
+
+  def initialize
+    @mutex = Mutex.new
+    @rates = {}
+  end
 
   def update_rates(cache=nil)
     update_parsed_rates(doc(cache))
@@ -77,7 +82,7 @@ class NbuCurrency < Money::Bank::VariableExchange
 
   def doc(cache, url=NBU_RATES_URL)
     rates_source = !!cache ? cache : url
-    Nokogiri::XML(open(rates_source)).tap { |doc| doc.xpath('xmlns:exchangerate//xmlns:exchangerate') }
+    Nokogiri::XML(open(rates_source)).tap { |doc| doc.xpath('exchangerate/exchangerate') }
   rescue Nokogiri::XML::XPath::SyntaxError
     Nokogiri::XML(open(url))
   end
@@ -87,18 +92,18 @@ class NbuCurrency < Money::Bank::VariableExchange
   end
 
   def update_parsed_rates(doc)
-    rates = doc.xpath('xmlns:exchangerate//xmlns:exchangerate')
+    rates = doc.xpath('exchangerate/exchangerate')
 
     @mutex.synchronize do
       rates.each do |exchange_rate|
-        rate = BigDecimal(exchange_rate.attribute("buy").value) / exchange_rate.attribute("unit").value / 10000
+        rate = BigDecimal(exchange_rate.attribute("buy").value.to_i) / exchange_rate.attribute("unit").value.to_f / 10000.0
         currency = exchange_rate.attribute("ccy").value
         set_rate("UAH", currency, rate, :without_mutex => true)
       end
       set_rate("UAH", "UAH", 1, :without_mutex => true)
     end
 
-    rates_updated_at = doc.xpath('xmlns:exchangerate//xmlns:exchangerate/@date').first.value
+    rates_updated_at = doc.xpath('exchangerate/exchangerate/@date').first.value
     @rates_updated_at = Time.parse(rates_updated_at)
 
     @last_updated = Time.now
@@ -115,7 +120,18 @@ class NbuCurrency < Money::Bank::VariableExchange
   end
 
   def rate_key_for(from, to, opts)
-    key = "#{from}_TO_#{to}"
+    if from.is_a? Money
+      key = "#{from.currency}_TO_"
+    else
+      key = "#{from}_TO_"
+    end
+
+    if to.is_a? Money
+      key << to.currency
+    else
+      key << to
+    end
+    # key = "#{from}_TO_#{to}"
     key.upcase
   end
 end
