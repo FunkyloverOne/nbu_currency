@@ -13,11 +13,6 @@ class NbuCurrency < Money::Bank::VariableExchange
   CURRENCIES = %w(USD CAD EUR GBP UAH).map(&:freeze).freeze
   NBU_RATES_URL = 'https://privat24.privatbank.ua/p24/accountorder?oper=prp&PUREXML&apicour&country=ua&full'.freeze
 
-  def initialize
-    @mutex = Mutex.new
-    @rates = {}
-  end
-
   def update_rates(cache=nil)
     update_parsed_rates(doc(cache))
   end
@@ -120,18 +115,7 @@ class NbuCurrency < Money::Bank::VariableExchange
   end
 
   def rate_key_for(from, to, opts)
-    if from.is_a? Money
-      key = "#{from.currency}_TO_"
-    else
-      key = "#{from}_TO_"
-    end
-
-    if to.is_a? Money
-      key << to.currency
-    else
-      key << to
-    end
-    # key = "#{from}_TO_#{to}"
+    key = "#{from}_TO_#{to}"
     key.upcase
   end
 end
