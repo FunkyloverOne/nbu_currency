@@ -77,9 +77,17 @@ class NbuCurrency < Money::Bank::VariableExchange
 
   def doc(cache, url=NBU_RATES_URL)
     rates_source = !!cache ? cache : url
-    Nokogiri::XML(open(rates_source)).tap { |doc| doc.xpath('exchangerate/exchangerate') }
-  rescue Nokogiri::XML::XPath::SyntaxError
-    Nokogiri::XML(open(url))
+    begin
+      Nokogiri::XML(open(rates_source)).tap do |doc|
+        if doc.xpath('exchangerate/exchangerate/@date').any?
+          doc.xpath('exchangerate/exchangerate')
+        else
+          raise Nokogiri::XML::XPath::SyntaxError
+        end
+      end
+    rescue Nokogiri::XML::XPath::SyntaxError
+      Nokogiri::XML(open(url))
+    end
   end
 
   def doc_from_s(content)
