@@ -127,7 +127,7 @@ describe NbuCurrency do
       rates = YAML.load(@bank.export_rates(:yaml))
       rates.delete('UAH_TO_UAH')
       rates = rates.values.collect(&:to_i)
-      expect(rates.length).to eq(54)
+      expect(rates.length).to eq(4)
       expect(rates).to satisfy { |rates|
         rates.all?(&:even?) or rates.all?(&:odd?)
       }
