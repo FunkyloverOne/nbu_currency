@@ -1,8 +1,8 @@
-# NbuCurrency
+# nbu_currency
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/nbu_currency`. To experiment with that code, run `bin/console` for an interactive prompt.
+## Introduction
 
-TODO: Delete this and the text above, and describe your gem
+This gem downloads the exchange rates from the National Bank Of Ukraine. You can calculate exchange rates with it. It is compatible with the money gem.
 
 ## Installation
 
@@ -22,7 +22,27 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+With the gem, you do not need to manually add exchange rates. Calling update_rates will download the rates from the National Bank Of Ukraine. The API is the same as the money gem. Feel free to use Money objects with the bank.
+
+For performance reasons, you may prefer to read from a file instead. Furthermore, NBU publishes their rates daily. It makes sense to save the rates in a file to read from. It also adds an __update_at__ field so that you can manage the update.
+
+``` ruby
+# cached location
+cache = "/some/file/location/exchange_rates.xml"
+
+# saves the rates in a specified location
+nbu_bank.save_rates(cache)
+
+# reads the rates from the specified location
+nbu_bank.update_rates(cache)
+
+if !nbu_bank.rates_updated_at || nbu_bank.rates_updated_at < Time.now - 1.days
+  nbu_bank.save_rates(cache)
+  nbu_bank.update_rates(cache)
+end
+
+# exchange 100 CAD to USD as usual
+nbu_bank.exchange_with(Money.new(100, "CAD"), "USD") # Money.new(80, "USD")
 
 ## Development
 
