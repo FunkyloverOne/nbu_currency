@@ -20,6 +20,11 @@ Or install it yourself as:
 
     $ gem install nbu_currency
 
+## Dependencies
+
+- nokogiri
+- money
+
 ## Usage
 
 With the gem, you do not need to manually add exchange rates. Calling update_rates will download the rates from the National Bank Of Ukraine. The API is the same as the money gem. Feel free to use Money objects with the bank.
