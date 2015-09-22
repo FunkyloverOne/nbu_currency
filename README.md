@@ -43,6 +43,7 @@ end
 
 # exchange 100 CAD to USD as usual
 nbu_bank.exchange_with(Money.new(100, "CAD"), "USD") # Money.new(80, "USD")
+```
 
 ## Development
 
